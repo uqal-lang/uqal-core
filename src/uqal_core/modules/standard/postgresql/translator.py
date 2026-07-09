@@ -370,6 +370,12 @@ class PostgreSQLTranslator:
             )
             return f"NOT ({inner_sql})", inner_params
 
+        from uqal_core.ast.condition_registry import get_condition_builder
+        builder = get_condition_builder(type(condition))
+        if builder:
+            sql, ext_params = builder(condition)
+            return sql, list(ext_params)
+
         return "TRUE", []
 
     def _expr_to_sql(
