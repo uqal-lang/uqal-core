@@ -59,10 +59,12 @@ class ModuleManifest:
         name: str,
         version: str,
         requires: list[str] | None = None,
+        is_extension: bool = False,
     ) -> None:
         self.name = name
         self.version = version
         self.requires = requires or []
+        self.is_extension = is_extension
 
     def __repr__(self) -> str:
         return (
