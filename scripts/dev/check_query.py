@@ -37,7 +37,8 @@ def check_query(query: str, module_names: list[str] | None = None) -> None:
     loader = ModuleLoader(registry=registry)
     loader.load(modules_to_load)
 
-    loaded_modules = [registry.get_module(m) for m in modules_to_load if registry.get_module(m)]
+    # Use all registered modules (includes transitive dependencies)
+    loaded_modules = [registry.get_module(m) for m in registry.list_modules()]
 
     builder = GrammarBuilder()
     parser = builder.build(loaded_modules)

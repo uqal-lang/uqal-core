@@ -25,7 +25,7 @@ from importlib.metadata import entry_points
 from pathlib import Path
 from typing import Type
 
-from uqal_core.module_interface import UQALModule
+from uqal_core.module_interface import ModuleManifest, UQALModule
 from uqal_core.registry.module_registry import ModuleRegistry
 from uqal_core.types import CoreType
 
@@ -75,6 +75,11 @@ class ModuleLoader:
         for module_name in load_order:
             if module_name not in to_load:
                 continue
+            try:
+                self._registry.get_module(module_name)
+                continue  # already loaded, skip
+            except KeyError:
+                pass
             cls = self._get_discovered(module_name)
             instance = cls()
             self._validate(instance)
@@ -222,6 +227,9 @@ class ModuleLoader:
     def _validate_type_mapping(
         self, instance: UQALModule, module_name: str
     ) -> None:
+        manifest = instance.get_manifest()
+        if manifest.is_extension:
+            return
         mapping = instance.get_type_mapping()
         missing = [
             t.value for t in CoreType
@@ -238,7 +246,9 @@ class ModuleLoader:
         self, manifest: "ModuleManifest"
     ) -> None:
         for dep in manifest.requires:
-            if not self._registry.has_module(dep):
+            try:
+                self._registry.get_module(dep)
+            except KeyError:
                 raise ModuleLoadError(
                     f"Module '{manifest.name}' requires '{dep}' to be "
                     f"loaded first, but '{dep}' is not yet in the registry."
