@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+test_grammar.py
+test_grammar_files.py
+
+test_grammar_builder.py
+
+tests/logs/
+tests/coverage_html/
+
+.env
+
+uqal_config.json
+
+.coverage
+tests/coverage_html/
+
+.uqal/

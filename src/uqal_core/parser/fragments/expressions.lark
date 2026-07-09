@@ -1,0 +1,23 @@
+%import common.ESCAPED_STRING
+%import common.CNAME -> NAME
+
+expression: addition
+addition: multiplication (ADD_OP multiplication)*
+multiplication: atom (MUL_OP atom)*
+
+atom: integer_lit
+    | string_lit
+    | bool_lit
+    | variable_ref
+    | "(" expression ")"
+
+integer_lit: INTEGER
+string_lit:  ESCAPED_STRING
+bool_lit:    BOOL
+
+variable_ref: NAME ("." NAME)*
+
+ADD_OP: "+" | "-"
+MUL_OP: "*" | "/"
+BOOL:    "true" | "false"
+INTEGER: /[0-9]+/

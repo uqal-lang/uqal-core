@@ -1,0 +1,9 @@
+// Neo4j native Cypher extension.
+// Adds db1.cypher("MATCH ...") command.
+neo4j_cypher: "cypher" "(" ESCAPED_STRING ")"
+
+// Relationship traversal condition:
+//   u PLACED o
+//   o CONTAINS[quantity, unit_price] p
+neo4j_rel_traversal: NAME NAME NAME
+                   | NAME NAME "[" NAME ("," NAME)* "]" NAME

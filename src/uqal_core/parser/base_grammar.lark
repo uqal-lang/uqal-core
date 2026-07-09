@@ -1,0 +1,198 @@
+%import common.CNAME        -> NAME
+%import common.ESCAPED_STRING
+%import common.WS
+%ignore WS
+
+COMMENT: "//" /[^\n]*/
+%ignore COMMENT
+
+start: statement+
+
+statement: let_stmt
+         | if_stmt
+         | for_stmt
+         | while_stmt
+         | db_call_stmt
+         | db_query_block_stmt
+         | setup_cmd
+         | list_dbs_cmd
+         | list_modules_cmd
+         | output_stmt
+         | create_view_stmt
+
+// ---- Create View ----
+create_view_stmt: NAME "." "create_view" NAME ":" view_body
+
+view_body: view_alias+ view_return
+
+view_alias: "let" NAME "=" "table" NAME
+          | "let" NAME "=" "table" NAME "where" condition
+
+view_return: "return" view_return_fields
+view_return_fields: view_return_field ("," view_return_field)*
+AS_KW: /[Aa][Ss]/
+view_return_field: NAME "." NAME AS_KW NAME -> aliased_prefixed_field
+                 | NAME "." NAME            -> prefixed_field
+                 | NAME AS_KW NAME          -> aliased_plain_field
+                 | NAME                     -> plain_field
+         
+// ---- Output ----
+output_stmt: "output" output_fields
+output_fields: output_field ("," output_field)*
+output_field: NAME
+
+// ---- Let ----
+let_stmt: "let" NAME "=" let_value
+let_value: db_call | db_query_block | expression
+
+// ---- Control flow ----
+if_stmt: "if" condition ":" block elif_clause* else_clause?
+elif_clause: "elif" condition ":" block
+else_clause: "else" ":" block
+
+for_stmt: "for" NAME "in" expression ":" block
+while_stmt: "while" condition ":" block
+
+block: statement+
+
+// ---- Expressions ----
+expression: addition
+addition: multiplication (ADD_OP multiplication)*
+multiplication: atom (MUL_OP atom)*
+
+atom: integer_lit
+    | string_lit
+    | bool_lit
+    | variable_ref
+    | "(" expression ")"
+
+integer_lit: INTEGER
+string_lit:  ESCAPED_STRING
+bool_lit:    BOOL
+
+variable_ref: NAME ("." NAME)*
+
+ADD_OP: "+" | "-"
+MUL_OP: "*" | "/"
+BOOL:    "true" | "false"
+INTEGER: /[0-9]+/
+
+// ---- Conditions ----
+condition: or_condition
+         | module_condition
+or_condition:  and_condition ("or" and_condition)*
+and_condition: not_condition ("and" not_condition)*
+not_condition: "not" comparison -> negate_condition
+             | comparison
+
+comparison: expression COMPARATOR expression -> compare
+          | expression "is" "null"           -> is_null
+          | expression "is" "not" "null"     -> is_not_null
+
+COMPARATOR: "==" | "!=" | ">=" | "<=" | ">" | "<" | "="
+
+// ---- Types ----
+type_expr: core_type | module_type
+
+core_type: CORE_TYPE_NAME
+CORE_TYPE_NAME: "integer" | "float" | "string" | "boolean" | "datetime" | "list"
+
+module_type: NAME "." NAME
+           | NAME "." NAME "(" INTEGER ")"
+           | NAME "." NAME "(" ESCAPED_STRING ")"
+
+// ---- Schema definition ----
+schema_def: "{" field_def ("," field_def)* "}"
+field_def: ESCAPED_STRING ":" type_expr field_options?
+field_options: "(" field_option ("," field_option)* ")"
+field_option: FIELD_OPT ":" BOOL
+FIELD_OPT: "primary_key" | "required"
+
+// ---- Parameters ----
+param_list: param ("," param)*
+
+param: where_param
+     | fields_param
+     | field_param
+     | live_param
+     | name_param
+
+where_param:  "where" condition
+fields_param: "fields" NAME ("," NAME)*
+field_param:  "field" NAME
+live_param:   "live" "=" BOOL
+name_param:   NAME "=" expression
+
+// ---- DB calls ----
+db_call_stmt: db_call
+
+db_call: db_generic_call
+       | db_table_call
+       | db_connection_call
+       | db_write_call
+
+db_generic_call:    NAME "." "(" param_list ")"
+db_table_call:      NAME "." NAME "." db_table_command
+db_connection_call: NAME "." connection_command
+
+db_table_command: read_command "(" param_list? ")"
+
+read_command: READ_CMD
+READ_CMD: "get_value" | "get_table" | "get_row" | "get"
+
+// Write commands - each alternative is a named rule so the
+// transformer can detect the command name unambiguously
+db_write_call: NAME "." NAME "." write_command
+
+write_command: insert_table_cmd
+             | insert_row_cmd
+             | update_cmd
+             | delete_cmd
+
+insert_table_cmd: "insert_table" "(" schema_def ")"
+insert_row_cmd:   "insert_row"   "(" param_list ")"
+update_cmd:       "update"       "(" param_list ")"
+delete_cmd:       "delete"       "(" param_list ")"
+
+connection_command: list_tables_cmd
+                  | sync_schema_cmd
+                  | module_connection_command
+
+list_tables_cmd: "list_tables"
+               | "list_tables" "(" param_list ")"
+
+sync_schema_cmd: "sync_schema"
+
+// ---- Query block ----
+db_query_block_stmt: db_query_block
+db_query_block: NAME "." "query" ":" query_body
+
+query_body: query_alias+ query_return
+
+query_alias: "let" NAME "=" "table" NAME
+           | "let" NAME "=" "table" NAME "where" condition
+
+query_return: "return" return_fields
+return_fields: return_field ("," return_field)*
+return_field: NAME "." NAME -> prefixed_field
+            | NAME           -> plain_field
+
+// ---- Setup commands ----
+setup_cmd: connect_cmd | sync_schema_stmt
+
+connect_cmd: "connect" NAME "as" NAME "(" connect_params ")"
+connect_params: connect_param ("," connect_param)*
+connect_param: NAME "=" expression
+
+sync_schema_stmt: NAME "." "sync_schema"
+
+// ---- System commands ----
+list_dbs_cmd:     "list" "dbs"
+list_modules_cmd: "list" "modules"
+
+
+// ---- Extension points for modules ----
+module_table_command:      /\x00/
+module_connection_command: /\x00/
+module_condition:          /\x00/
+module_param:              /\x00/

@@ -1,0 +1,46 @@
+[project]
+name = "uqal-core"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.4.2",
+    "lark>=1.3.1",
+    "neo4j>=6.2.0",
+    "prompt-toolkit>=3.0.52",
+    "psycopg2-binary>=2.9.12",
+    "pymongo>=4.17.0",
+    "textual>=8.2.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=6.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uqal_core"]
+
+[project.scripts]
+uqal = "uqal_core.cli.main:cli"
+
+[tool.pytest.ini_options]
+addopts = "-v --tb=short --cov=src/uqal_core --cov-report=term-missing --cov-report=html:tests/coverage_html"
+testpaths = ["tests"]
+log_cli = true
+log_cli_level = "INFO"
+log_file = "tests/logs/test_results.log"
+log_file_level = "INFO"
+log_file_format = "%(asctime)s %(levelname)s %(message)s"
+log_file_date_format = "%Y-%m-%d %H:%M:%S"
+markers = [
+    "unit: fast isolated tests with no external dependencies",
+    "integration: tests combining multiple components",
+    "e2e: full end-to-end workflow tests",
+]

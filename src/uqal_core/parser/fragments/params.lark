@@ -1,0 +1,19 @@
+%import common.CNAME -> NAME
+%import common.ESCAPED_STRING
+%import .expressions.BOOL
+%import .expressions.expression
+%import .conditions.condition
+
+param_list: param ("," param)*
+
+param: where_param
+     | fields_param
+     | field_param
+     | live_param
+     | name_param
+
+where_param:  "where" condition
+fields_param: "fields" NAME ("," NAME)*
+field_param:  "field" NAME
+live_param:   "live" "=" BOOL
+name_param:   NAME "=" expression

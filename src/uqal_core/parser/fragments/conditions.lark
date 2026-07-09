@@ -1,0 +1,14 @@
+%import common.CNAME -> NAME
+%import .expressions.expression
+
+condition: or_condition
+or_condition:  and_condition ("or" and_condition)*
+and_condition: not_condition ("and" not_condition)*
+not_condition: "not" comparison -> negate_condition
+             | comparison
+
+comparison: expression COMPARATOR expression -> compare
+          | expression "is" "null"           -> is_null
+          | expression "is" "not" "null"     -> is_not_null
+
+COMPARATOR: "==" | "!=" | ">=" | "<=" | ">" | "<" | "="

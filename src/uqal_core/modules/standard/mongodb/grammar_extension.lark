@@ -1,0 +1,5 @@
+// MongoDB native query extension.
+// Adds db1.mongo('{"find": "orders", "filter": {}}') command.
+// Registered at the MODULE_CONNECTION_COMMAND extension point.
+
+mongodb_mongo: "mongo" "(" ESCAPED_STRING ")"

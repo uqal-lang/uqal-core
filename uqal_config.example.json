@@ -1,0 +1,17 @@
+{
+  "connections": {
+    "db1": {
+      "module_type": "standard.postgresql",
+      "modules": ["standard.postgresql"],
+      "host": "localhost",
+      "port": 5432,
+      "database": "mydb"
+    },
+    "graph": {
+      "module_type": "standard.neo4j",
+      "modules": ["standard.neo4j"],
+      "host": "localhost",
+      "port": 7687
+    }
+  }
+}

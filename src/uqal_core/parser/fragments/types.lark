@@ -1,0 +1,19 @@
+%import common.ESCAPED_STRING
+%import common.CNAME -> NAME
+%import .expressions.INTEGER
+%import .expressions.BOOL
+
+type_expr: core_type | module_type
+
+core_type: CORE_TYPE_NAME
+CORE_TYPE_NAME: "integer" | "float" | "string" | "boolean" | "datetime" | "list"
+
+module_type: NAME "." NAME
+           | NAME "." NAME "(" INTEGER ")"
+           | NAME "." NAME "(" ESCAPED_STRING ")"
+
+schema_def: "{" field_def ("," field_def)* "}"
+field_def: ESCAPED_STRING ":" type_expr field_options?
+field_options: "(" field_option ("," field_option)* ")"
+field_option: FIELD_OPT ":" BOOL
+FIELD_OPT: "primary_key" | "required"

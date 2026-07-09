@@ -1,0 +1,5 @@
+// PostgreSQL native SQL extension.
+// Adds db1.sql("SELECT ...") as a table-level command.
+// Registered at the MODULE_TABLE_COMMAND extension point.
+
+postgresql_sql: "sql" "(" ESCAPED_STRING ")"
